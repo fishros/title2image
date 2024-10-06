@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auto Blog Banner Generator</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Auto Blog Banner Generator</h1>
+        <form action="/generate_image" method="GET" class="mt-4">
+            <div class="form-group">
+                <label for="title">Title:</label>
+                <input type="text" class="form-control" id="title" name="title" required>
+            </div>
+            <div class="form-group">
+                <label for="max_line_size">Max Line Size:</label>
+                <input type="number" class="form-control" id="max_line_size" name="max_line_size" value="10" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Generate and Download Image</button>
+        </form>
+    </div>
+</body>
+</html>
