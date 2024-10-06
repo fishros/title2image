@@ -31,7 +31,7 @@ def download_image(url, save_path):
     else:
         return False
 
-def generate_image(image_path, title, output_path, font_path, max_line_size, text_color=(255, 255, 255), mask_color=(0, 0, 0, 30), blur_radius=5):
+def generate_image(image_path, title, output_path, font_path, max_line_size, text_color=(255, 255, 255), mask_color=(0, 0, 0, 30), blur_radius=5, offset_y=0):
     """
     生成带有标题文本的图片，并添加蒙板和高斯模糊
 
@@ -49,55 +49,56 @@ def generate_image(image_path, title, output_path, font_path, max_line_size, tex
         None
     """
     image = Image.open(image_path)
-    image = ImageOps.fit(image, (640,480))
+    # image = ImageOps.fit(image, (640,480))
     # 高斯模糊
-    blurred_image = image.filter(ImageFilter.GaussianBlur(blur_radius))
+    # blurred_image = image.filter(ImageFilter.GaussianBlur(blur_radius))
 
     # 创建蒙板
-    mask = Image.new('RGBA', image.size, mask_color)
+    # mask = Image.new('RGBA', image.size, mask_color)
 
     # 合并图像和蒙板
-    masked_image = Image.alpha_composite(blurred_image.convert('RGBA'), mask)
+    # masked_image = Image.alpha_composite(blurred_image.convert('RGBA'), mask)
 
     # 在蒙板上绘制文本
-    draw = ImageDraw.Draw(masked_image)
+    draw = ImageDraw.Draw(image)
 
     image_width, image_height = image.size
     text_width = (6 / 7) * image_width
     text_height = (2 / 3) * image_height
     max_line_size = int(max_line_size)
+    offset_y = int(offset_y)
     font_size = int(text_width/max_line_size)
     font = ImageFont.truetype(font_path, font_size)
 
     text_x = image_width/2
-    text_y = (image_height) / 2
+    text_y = (image_height) / 2 - offset_y
 
     text_lines = '\n'.join(textwrap.wrap(title, max_line_size))
     draw.text((text_x, text_y), text_lines,anchor='mm',fill=text_color, font=font)
 
     # 保存生成的图片
-    masked_image.save(output_path, "PNG")
-    masked_image.close()
+    image.save(output_path, "PNG")
+    image.close()
 
 @app.route('/generate_image', methods=['GET'])
 def generate_image_api():
     title = request.args.get('title')
-    max_line_size = request.args.get('max_line_size', 10)  # 获取max_line_size参数，默认为6
-
+    max_line_size = request.args.get('max_line_size', 15)  # 获取max_line_size参数，默认为6
+    offset_y = request.args.get('offset_y', 50)  # 获取max_line_size参数，默认为6
     # 调用下载函数
-    image_url = "https://t.mwm.moe/fj/"
-    download_success = download_image(image_url, "your_image.jpg")
+    # image_url = "https://t.mwm.moe/fj/"
+    # download_success = download_image(image_url, "your_image.jpg")
 
-    if download_success:
-        # 调用生成图片函数
-        image_path = "your_image.jpg"
-        output_image_path = "output_image.png"  # 注意保存为 PNG 格式，以支持透明度
-        font_path = "yahei.ttf"
-        generate_image(image_path, title, output_image_path, font_path, max_line_size)
-        # 返回生成的图片
-        return send_file(output_image_path, as_attachment=True)
-    else:
-        return jsonify({'message': '无法下载图片'})
+    # if download_success:
+    # 调用生成图片函数
+    image_path = "your_image.jpg"
+    output_image_path = "output_image.png"  # 注意保存为 PNG 格式，以支持透明度
+    font_path = "HYZY.otf"
+    generate_image(image_path, title, output_image_path, font_path, max_line_size,offset_y=offset_y)
+    # 返回生成的图片
+    return send_file(output_image_path, as_attachment=True)
+    # else:
+    #     return jsonify({'message': '无法下载图片'})
 
 
 if __name__ == '__main__':
