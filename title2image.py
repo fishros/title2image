@@ -31,6 +31,8 @@ def download_image(url, save_path):
     else:
         return False
 
+
+
 def generate_image(image_path, title, output_path, font_path, max_line_size, text_color=(255, 255, 255), mask_color=(0, 0, 0, 30), blur_radius=5, offset_y=0):
     """
     生成带有标题文本的图片，并添加蒙板和高斯模糊
@@ -42,43 +44,47 @@ def generate_image(image_path, title, output_path, font_path, max_line_size, tex
         font_path (str): 字体文件路径
         max_line_size (int): 每行的最大字符数
         text_color (tuple): 文本颜色，默认为白色
-        mask_color (tuple): 蒙板颜色和不透明度，默认为半透明黑色
-        blur_radius (int): 高斯模糊半径，默认为10
-
     Returns:
         None
     """
     image = Image.open(image_path)
-    # image = ImageOps.fit(image, (640,480))
-    # 高斯模糊
-    # blurred_image = image.filter(ImageFilter.GaussianBlur(blur_radius))
-
-    # 创建蒙板
-    # mask = Image.new('RGBA', image.size, mask_color)
-
-    # 合并图像和蒙板
-    # masked_image = Image.alpha_composite(blurred_image.convert('RGBA'), mask)
-
-    # 在蒙板上绘制文本
     draw = ImageDraw.Draw(image)
 
     image_width, image_height = image.size
     text_width = (6 / 7) * image_width
-    text_height = (2 / 3) * image_height
     max_line_size = int(max_line_size)
     offset_y = int(offset_y)
-    font_size = int(text_width/max_line_size)
+
+    # 设置字体大小，计算每行的最大宽度和高度
+    font_size = int(text_width / max_line_size)
     font = ImageFont.truetype(font_path, font_size)
 
-    text_x = image_width/2
-    text_y = (image_height) / 2 - offset_y
+    # 对标题进行换行处理
+    text_lines = textwrap.wrap(title, max_line_size)
 
-    text_lines = '\n'.join(textwrap.wrap(title, max_line_size))
-    draw.text((text_x, text_y), text_lines,anchor='mm',fill=text_color, font=font)
+    # 计算文本总高度，使用 getbbox 计算单行文本的高度
+    line_height = font.getbbox('A')[3] - font.getbbox('A')[1]+20  # 获取字符 'A' 的上下边界，得出高度
+    total_text_height = line_height * len(text_lines)
+
+    # 起始位置 (x, y)，使文本垂直居中
+    text_x = image_width / 2
+    text_y = (image_height - total_text_height) / 2 - offset_y
+
+    # 绘制文本，逐行进行居中对齐
+    for line in text_lines:
+        # 使用 textbbox 代替 textsize 来获取文本边界框
+        bbox = draw.textbbox((0, 0), line, font=font)
+        line_width = bbox[2] - bbox[0]
+        
+        # 绘制文本并水平居中
+        draw.text((text_x - line_width / 2, text_y), line, fill=text_color, font=font)
+        text_y += line_height
 
     # 保存生成的图片
     image.save(output_path, "PNG")
     image.close()
+
+
 
 @app.route('/generate_image', methods=['GET'])
 def generate_image_api():
@@ -92,7 +98,7 @@ def generate_image_api():
     # if download_success:
     # 调用生成图片函数
     image_path = "your_image.jpg"
-    output_image_path = "output_image.png"  # 注意保存为 PNG 格式，以支持透明度
+    output_image_path = f"{title}.png"  # 注意保存为 PNG 格式，以支持透明度
     font_path = "HYZY.otf"
     generate_image(image_path, title, output_image_path, font_path, max_line_size,offset_y=offset_y)
     # 返回生成的图片
